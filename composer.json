@@ -1,9 +1,9 @@
 {
-    "name": "lubos/digital-ocean",
+    "name": "lubos/wedos",
     "type": "cakephp-plugin",
-    "description": "CakePHP DigitalOcean plugin which helps you interact with their api service",
+    "description": "CakePHP Wedos plugin which helps you interact with their api service",
     "keywords": ["cakephp", "digital ocean", "plugin"],
-    "homepage": "https://github.com/LubosRemplik/CakePHP-DigitalOcean",
+    "homepage": "https://github.com/LubosRemplik/CakePHP-Wedos",
     "license": "MIT",
     "authors": [
         {
@@ -18,7 +18,7 @@
     },
     "autoload": {
         "psr-4": {
-            "Lubos\\DigitalOcean\\": "src"
+            "Lubos\\Wedos\\": "src"
         }
     }
 }
