@@ -8,7 +8,7 @@
 
 CakePHP 3.x plugin for interacting with [Wedos api](http://kb.wedos.com/wapi.html)
 
-## Installation
+## Installation & Configuration
 
 ```
 composer require lubos/wedos
@@ -18,6 +18,14 @@ Load plugin in bootstrap.php file
 
 ```php
 Plugin::load('Lubos/Wedos');
+```
+
+Get Wedos user and password on [Wedos](http://wedos.com) and put them in config
+```php
+'Wedos' => [
+    'user' => 'your-user',
+    'password' => 'your-password'
+]
 ```
 
 ## Usage
