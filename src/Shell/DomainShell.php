@@ -1,24 +1,10 @@
 <?php
 namespace Lubos\Wedos\Shell;
 
-use Cake\Console\Shell;
-use Cake\Core\Configure;
-use Cake\Network\Http\Client;
-use Cake\Utility\String;
 use Cake\Utility\Xml;
 
-class DomainShell extends Shell
+class DomainShell extends WedosShell
 {
-
-    /**
-     * Main function Prints out the list of shells.
-     *
-     * @return void
-     */
-    public function main()
-    {
-        $this->out($this->OptionParser->help());
-    }
 
     /**
      * Gets the option parser instance and configures it.
@@ -30,6 +16,7 @@ class DomainShell extends Shell
         $parser = parent::getOptionParser();
         $parser->addSubcommand('check');
         $parser->addSubcommand('create');
+        $parser->addSubcommand('info');
         return $parser;
     }
 
@@ -37,37 +24,27 @@ class DomainShell extends Shell
      * Checking if domain is available
      *
      * @param string $domain Domain to check.
-     * @return mixed
+     * @return \Cake\Network\Http\Response
      */
     public function check($domain)
     {
-        $client = new Client();
-        $request = Xml::fromArray([
-            'request' => [
-                'user' => Configure::read('Wedos.user'),
-                'auth' => sha1(implode([
-                    Configure::read('Wedos.user'),
-                    sha1(Configure::read('Wedos.password')),
-                    date('H', time())
-                ])),
-                'command' => 'domain-check',
-                'data' => [
-                    'name' => $domain
-                ]
-            ]
-        ])->asXml();
-        $response = $client->post(
-            Configure::read('Wedos.url'),
+        $this->request['request']['command'] = 'domain-check';
+        $this->request['request']['data'] = [
+            'name' => $domain
+        ];
+        $request = Xml::fromArray($this->request)->asXml();
+        $response = $this->client->post(
+            $this->url,
             ['request' => $request],
             ['type' => 'xml']
         );
         if ($response->isOk()) {
             $results = Xml::toArray($response->xml);
-            $this->out(print_r($results['response'], true));
-            return $results;
+            $this->out(pr($results['response']));
         } else {
-            debug($response->code);
+            debug($response);
         }
+        return $response;
     }
 
     /**
@@ -77,49 +54,67 @@ class DomainShell extends Shell
      * @param string $owner Owner contact ID.
      * @param string $admin Admin contact ID.
      * @param int $period Number of years.
-     * @return mixed
+     * @return \Cake\Network\Http\Response
      */
     public function create($domain, $owner, $admin, $period = 1)
     {
-        $client = new Client();
-        $contact = $this->contactInfo($owner);
-        if (empty($contact['response']['data']['contact'])) {
+        $contact = new ContactShell();
+        $data = $contact->info($owner);
+        if (empty($data['response']['data']['contact'])) {
             $this->out('Wrong contact data');
             return false;
         }
-        $request = Xml::fromArray([
-            'request' => [
-                'user' => Configure::read('Wedos.user'),
-                'auth' => sha1(implode([
-                    Configure::read('Wedos.user'),
-                    sha1(Configure::read('Wedos.password')),
-                    date('H', time())
-                ])),
-                'command' => 'domain-create',
-                'data' => [
-                    'name' => $domain,
-                    'period' => $period,
-                    'dns' => ' ',
-                    'owner_c' => $owner,
-                    'admin_c' => $admin,
-                    'rules' => [
-                        'fname' => $contact['response']['data']['contact']['fname'],
-                        'lname' => $contact['response']['data']['contact']['lname'],
-                    ]
-                ]
+        $this->request['request']['command'] = 'domain-create';
+        $this->request['request']['data'] = [
+            'name' => $domain,
+            'period' => $period,
+            'dns' => ' ',
+            'owner_c' => $owner,
+            'admin_c' => $admin,
+            'rules' => [
+                'fname' => $contact['response']['data']['contact']['fname'],
+                'lname' => $contact['response']['data']['contact']['lname'],
             ]
-        ])->asXml();
-        $response = $client->post(
-            Configure::read('Wedos.url'),
+        ];
+        $request = Xml::fromArray($this->request)->asXml();
+        $response = $this->client->post(
+            $this->url,
             ['request' => $request],
             ['type' => 'xml']
         );
         if ($response->isOk()) {
             $results = Xml::toArray($response->xml);
-            $this->out(print_r($results['response'], true));
-            return $results;
+            $this->out(pr($results['response']));
         } else {
-            debug($response->code);
+            debug($response);
         }
+        return $response;
+    }
+
+    /**
+     * Domain info
+     *
+     * @param string $name Domain name to get info.
+     * @return \Cake\Network\Http\Response
+     */
+    public function info($name)
+    {
+        $this->request['request']['command'] = 'domain-info';
+        $this->request['request']['data'] = [
+            'name' => $name,
+        ];
+        $request = Xml::fromArray($this->request)->asXml();
+        $response = $this->client->post(
+            $this->url,
+            ['request' => $request],
+            ['type' => 'xml']
+        );
+        if ($response->isOk()) {
+            $results = Xml::toArray($response->xml);
+            $this->out(pr($results['response']));
+        } else {
+            debug($response);
+        }
+        return $response;
     }
 }

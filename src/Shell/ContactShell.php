@@ -1,24 +1,10 @@
 <?php
 namespace Lubos\Wedos\Shell;
 
-use Cake\Console\Shell;
-use Cake\Core\Configure;
-use Cake\Network\Http\Client;
-use Cake\Utility\String;
 use Cake\Utility\Xml;
 
-class ContactShell extends Shell
+class ContactShell extends WedosShell
 {
-
-    /**
-     * Main function Prints out the list of shells.
-     *
-     * @return void
-     */
-    public function main()
-    {
-        $this->out($this->OptionParser->help());
-    }
 
     /**
      * Gets the option parser instance and configures it.
@@ -28,8 +14,38 @@ class ContactShell extends Shell
     public function getOptionParser()
     {
         $parser = parent::getOptionParser();
-        $parser->addSubcommand('contactInfo');
+        $parser->addSubcommand('check');
+        $parser->addSubcommand('info');
         return $parser;
+    }
+
+    /**
+     * Getting NIC contact check
+     *
+     * @param string $cname Contact ID.
+     * @param string $tld TLD.
+     * @return \Cake\Network\Http\Response
+     */
+    public function check($cname, $tld = 'cz')
+    {
+        $this->request['request']['command'] = 'contact-check';
+        $this->request['request']['data'] = [
+            'tld' => $tld,
+            'cname' => $cname,
+        ];
+        $request = Xml::fromArray($this->request)->asXml();
+        $response = $this->client->post(
+            $this->url,
+            ['request' => $request],
+            ['type' => 'xml']
+        );
+        if ($response->isOk()) {
+            $results = Xml::toArray($response->xml);
+            $this->out(pr($results['response']));
+        } else {
+            debug($response);
+        }
+        return $response;
     }
 
     /**
@@ -37,38 +53,27 @@ class ContactShell extends Shell
      *
      * @param string $cname Contact ID.
      * @param string $tld TLD.
-     * @return mixed
+     * @return \Cake\Network\Http\Response
      */
     public function info($cname, $tld = 'cz')
     {
-        $client = new Client();
-        $request = Xml::fromArray([
-            'request' => [
-                'user' => Configure::read('Wedos.user'),
-                'auth' => sha1(implode([
-                    Configure::read('Wedos.user'),
-                    sha1(Configure::read('Wedos.password')),
-                    date('H', time())
-                ])),
-                'command' => 'contact-info',
-                'data' => [
-                    'tld' => $tld,
-                    'cname' => $cname,
-                ]
-            ]
-        ])->asXml();
-        $response = $client->post(
-            Configure::read('Wedos.url'),
+        $this->request['request']['command'] = 'contact-info';
+        $this->request['request']['data'] = [
+            'tld' => $tld,
+            'cname' => $cname,
+        ];
+        $request = Xml::fromArray($this->request)->asXml();
+        $response = $this->client->post(
+            $this->url,
             ['request' => $request],
             ['type' => 'xml']
         );
         if ($response->isOk()) {
             $results = Xml::toArray($response->xml);
-            $this->out(print_r($results['response'], true));
-            return $results;
+            $this->out(pr($results['response']));
         } else {
-            debug($response->code);
+            debug($response);
         }
-        return false;
+        return $response;
     }
 }

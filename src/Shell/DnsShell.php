@@ -1,24 +1,10 @@
 <?php
 namespace Lubos\Wedos\Shell;
 
-use Cake\Console\Shell;
-use Cake\Core\Configure;
-use Cake\Network\Http\Client;
-use Cake\Utility\String;
 use Cake\Utility\Xml;
 
-class DNSShell extends Shell
+class DnsShell extends WedosShell
 {
-
-    /**
-     * Main function Prints out the list of shells.
-     *
-     * @return void
-     */
-    public function main()
-    {
-        $this->out($this->OptionParser->help());
-    }
 
     /**
      * Gets the option parser instance and configures it.
@@ -98,74 +84,54 @@ class DNSShell extends Shell
      * Getting domain DNS info
      *
      * @param string $domain Domain to check.
-     * @return mixed
+     * @return \Cake\Network\Http\Response
      */
     public function domainInfo($domain)
     {
-        $client = new Client();
-        $request = Xml::fromArray([
-            'request' => [
-                'user' => Configure::read('Wedos.user'),
-                'auth' => sha1(implode([
-                    Configure::read('Wedos.user'),
-                    sha1(Configure::read('Wedos.password')),
-                    date('H', time())
-                ])),
-                'command' => 'dns-domain-info',
-                'data' => [
-                    'name' => $domain
-                ]
-            ]
-        ])->asXml();
-        $response = $client->post(
-            Configure::read('Wedos.url'),
+        $this->request['request']['command'] = 'dns-domain-info';
+        $this->request['request']['data'] = [
+            'name' => $domain
+        ];
+        $request = Xml::fromArray($this->request)->asXml();
+        $response = $this->client->post(
+            $this->url,
             ['request' => $request],
             ['type' => 'xml']
         );
         if ($response->isOk()) {
             $results = Xml::toArray($response->xml);
-            $this->out(print_r($results['response'], true));
-            return $results;
+            $this->out(pr($results['response']));
         } else {
-            debug($response->code);
+            debug($response);
         }
+        return $response;
     }
 
     /**
      * Getting domain DNS list
      *
      * @param string $domain Domain to check.
-     * @return mixed
+     * @return \Cake\Network\Http\Response
      */
     public function rowsList($domain)
     {
-        $client = new Client();
-        $request = Xml::fromArray([
-            'request' => [
-                'user' => Configure::read('Wedos.user'),
-                'auth' => sha1(implode([
-                    Configure::read('Wedos.user'),
-                    sha1(Configure::read('Wedos.password')),
-                    date('H', time())
-                ])),
-                'command' => 'dns-rows-list',
-                'data' => [
-                    'domain' => $domain
-                ]
-            ]
-        ])->asXml();
-        $response = $client->post(
-            Configure::read('Wedos.url'),
+        $this->request['request']['command'] = 'dns-rows-list';
+        $this->request['request']['data'] = [
+            'domain' => $domain
+        ];
+        $request = Xml::fromArray($this->request)->asXml();
+        $response = $this->client->post(
+            $this->url,
             ['request' => $request],
             ['type' => 'xml']
         );
         if ($response->isOk()) {
             $results = Xml::toArray($response->xml);
-            $this->out(print_r($results['response'], true));
-            return $results;
+            $this->out(pr($results['response']));
         } else {
-            debug($response->code);
+            debug($response);
         }
+        return $response;
     }
 
     /**
@@ -182,51 +148,32 @@ class DNSShell extends Shell
      *
      * @param string $domain Domain name.
      * @param string $rdata Record data (e.g. IP address).
-     * @return mixed
+     * @return \Cake\Network\Http\Response
      */
     public function rowAdd($domain, $rdata)
     {
-        extract($this->params);
-        if (!isset($name)) {
-            $name = ' ';
+        $data = [
+            'domain' => $domain,
+            'rdata' => $rdata,
+        ];
+        if (!empty($this->params)) {
+            $data = array_merge($data, $this->params);
         }
-        if (!isset($ttl)) {
-            $ttl = 1800;
-        }
-        if (!isset($type)) {
-            $type = 'A';
-        }
-        $client = new Client();
-        $request = Xml::fromArray([
-            'request' => [
-                'user' => Configure::read('Wedos.user'),
-                'auth' => sha1(implode([
-                    Configure::read('Wedos.user'),
-                    sha1(Configure::read('Wedos.password')),
-                    date('H', time())
-                ])),
-                'command' => 'dns-row-add',
-                'data' => [
-                    'domain' => $domain,
-                    'name' => $name,
-                    'ttl' => $ttl,
-                    'type' => $type,
-                    'rdata' => $rdata,
-                ]
-            ]
-        ])->asXml();
-        $response = $client->post(
-            Configure::read('Wedos.url'),
+        $this->request['request']['command'] = 'dns-row-add';
+        $this->request['request']['data'] = $data;
+        $request = Xml::fromArray($this->request)->asXml();
+        $response = $this->client->post(
+            $this->url,
             ['request' => $request],
             ['type' => 'xml']
         );
         if ($response->isOk()) {
             $results = Xml::toArray($response->xml);
-            $this->out(print_r($results['response'], true));
-            return $results;
+            $this->out(pr($results['response']));
         } else {
-            debug($response->code);
+            debug($response);
         }
+        return $response;
     }
 
     /**
@@ -234,38 +181,28 @@ class DNSShell extends Shell
      *
      * @param string $domain Domain name.
      * @param string $rowID Record ID (dnsRowsList to see IDs).
-     * @return mixed
+     * @return \Cake\Network\Http\Response
      */
     public function rowDelete($domain, $rowID)
     {
-        $client = new Client();
-        $request = Xml::fromArray([
-            'request' => [
-                'user' => Configure::read('Wedos.user'),
-                'auth' => sha1(implode([
-                    Configure::read('Wedos.user'),
-                    sha1(Configure::read('Wedos.password')),
-                    date('H', time())
-                ])),
-                'command' => 'dns-row-delete',
-                'data' => [
-                    'domain' => $domain,
-                    'row_id' => $rowID
-                ]
-            ]
-        ])->asXml();
-        $response = $client->post(
-            Configure::read('Wedos.url'),
+        $this->request['request']['command'] = 'dns-row-delete';
+        $this->request['request']['data'] = [
+            'domain' => $domain,
+            'row_id' => $rowID
+        ];
+        $request = Xml::fromArray($this->request)->asXml();
+        $response = $this->client->post(
+            $this->url,
             ['request' => $request],
             ['type' => 'xml']
         );
         if ($response->isOk()) {
             $results = Xml::toArray($response->xml);
-            $this->out(print_r($results['response'], true));
-            return $results;
+            $this->out(pr($results['response']));
         } else {
-            debug($response->code);
+            debug($response);
         }
+        return $response;
     }
 
     /**
@@ -276,7 +213,7 @@ class DNSShell extends Shell
      */
     public function rowDeleteAll($domain)
     {
-        $records = $this->dnsRowsList($domain);
+        $records = $this->rowsList($domain);
         foreach ($records['response']['data']['row'] as $row) {
             $this->rowDelete($domain, $row['ID']);
         }
