@@ -4,6 +4,8 @@ namespace Lubos\Wedos\Shell;
 use Cake\Console\Shell;
 use Cake\Core\Configure;
 use Cake\Network\Http\Client;
+use DateTime;
+use DateTimeZone;
 
 class WedosShell extends Shell
 {
@@ -20,13 +22,15 @@ class WedosShell extends Shell
             $this->error('Please set up Wedos user and password');
         }
         $this->client = new Client();
+        $date = new DateTime();
+        $date->setTimeZone(new DateTimeZone("Europe/Prague"));
         $this->request = [
             'request' => [
                 'user' => $data['user'],
                 'auth' => sha1(implode([
                     $data['user'],
                     sha1($data['password']),
-                    date('H', time())
+                    $date->format('H')
                 ])),
             ]
         ];
