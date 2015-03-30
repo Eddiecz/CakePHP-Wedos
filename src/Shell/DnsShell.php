@@ -213,7 +213,8 @@ class DnsShell extends WedosShell
      */
     public function rowDeleteAll($domain)
     {
-        $records = $this->rowsList($domain);
+        $response = $this->rowsList($domain);
+        $records = Xml::toArray($response->xml);
         foreach ($records['response']['data']['row'] as $row) {
             $this->rowDelete($domain, $row['ID']);
         }
