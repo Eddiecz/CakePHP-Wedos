@@ -142,7 +142,7 @@ class DnsShell extends WedosShell
      * wedos dnsRowAdd domain.cz "10 mail.domain.cz" --type MX # Adds MX record
      *
      * options via parser
-     * - name Record name (default www).
+     * - name Record name (default empty).
      * - ttl TTL (default 1800).
      * - type Record type (default A).
      *
@@ -156,8 +156,20 @@ class DnsShell extends WedosShell
             'domain' => $domain,
             'rdata' => $rdata,
         ];
+        unset($this->params['help']);
+        unset($this->params['verbose']);
+        unset($this->params['quiet']);
         if (!empty($this->params)) {
             $data = array_merge($data, $this->params);
+        }
+        if (!isset($data['name'])) {
+            $data['name'] = ' ';
+        }
+        if (!isset($data['ttl'])) {
+            $data['ttl'] = '1800';
+        }
+        if (!isset($data['type'])) {
+            $data['type'] = 'A';
         }
         $this->request['request']['command'] = 'dns-row-add';
         $this->request['request']['data'] = $data;
