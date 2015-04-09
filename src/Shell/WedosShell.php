@@ -11,12 +11,14 @@ class WedosShell extends Shell
 {
 
     /**
-     * Initial settings on startup
+     * Constructs this Shell instance.
      *
-     * @return void
+     * @param \Cake\Console\ConsoleIo $io An io instance.
+     * @link http://book.cakephp.org/3.0/en/console-and-shells.html#Shell
      */
-    public function startup()
+    public function __construct(ConsoleIo $io = null)
     {
+        parent::__construct($io);
         $data = Configure::read('Wedos');
         if (!isset($data['user']) || !isset($data['password'])) {
             $this->error('Please set up Wedos user and password');

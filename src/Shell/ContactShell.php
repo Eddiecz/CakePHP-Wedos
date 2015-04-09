@@ -2,6 +2,7 @@
 namespace Lubos\Wedos\Shell;
 
 use Cake\Utility\Xml;
+use Lubos\Wedos\Shell\WedosShell;
 
 class ContactShell extends WedosShell
 {
