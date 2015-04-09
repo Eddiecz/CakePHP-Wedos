@@ -60,7 +60,8 @@ class DomainShell extends WedosShell
     public function create($domain, $owner, $admin, $period = 1)
     {
         $contact = new ContactShell();
-        $data = $contact->info($owner);
+        $response = $contact->info($owner);
+        $data = Xml::toArray($response->xml);
         if (empty($data['response']['data']['contact'])) {
             $this->out('Wrong contact data');
             return false;
@@ -73,8 +74,8 @@ class DomainShell extends WedosShell
             'owner_c' => $owner,
             'admin_c' => $admin,
             'rules' => [
-                'fname' => $contact['response']['data']['contact']['fname'],
-                'lname' => $contact['response']['data']['contact']['lname'],
+                'fname' => $data['response']['data']['contact']['fname'],
+                'lname' => $data['response']['data']['contact']['lname'],
             ]
         ];
         $request = Xml::fromArray($this->request)->asXml();
