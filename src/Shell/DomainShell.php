@@ -18,6 +18,7 @@ class DomainShell extends WedosShell
         $parser->addSubcommand('check');
         $parser->addSubcommand('create');
         $parser->addSubcommand('info');
+        $parser->addSubcommand('transfer');
         return $parser;
     }
 
@@ -104,6 +105,41 @@ class DomainShell extends WedosShell
         $this->request['request']['command'] = 'domain-info';
         $this->request['request']['data'] = [
             'name' => $name,
+        ];
+        $request = Xml::fromArray($this->request)->asXml();
+        $response = $this->client->post(
+            $this->url,
+            ['request' => $request],
+            ['type' => 'xml']
+        );
+        if ($response->isOk()) {
+            $results = Xml::toArray($response->xml);
+            $this->out(pr($results['response']));
+        } else {
+            debug($response);
+        }
+        return $response;
+    }
+
+    /**
+     * Domain transfer
+     *
+     * @param string $name Domain name to transfer.
+     * @param string $authInfo Domain auth code.
+     * @param string $fname First name of owner.
+     * @param string $lname Last name of owner.
+     * @return \Cake\Network\Http\Response
+     */
+    public function transfer($name, $authInfo, $fname, $lname)
+    {
+        $this->request['request']['command'] = 'domain-transfer';
+        $this->request['request']['data'] = [
+            'name' => $name,
+            'auth_info' => $authInfo,
+            'rules' => [
+                'fname' => $fname,
+                'lname' => $lname,
+            ]
         ];
         $request = Xml::fromArray($this->request)->asXml();
         $response = $this->client->post(
