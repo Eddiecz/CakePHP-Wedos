@@ -18,7 +18,24 @@ class DomainShell extends WedosShell
         $parser->addSubcommand('check');
         $parser->addSubcommand('create');
         $parser->addSubcommand('info');
-        $parser->addSubcommand('transfer');
+        $parser->addSubcommand('transfer', [
+            'parser' => [
+                'arguments' => [
+                    'name' => [
+                        'required' => true
+                    ],
+                    'authInfo' => [
+                        'required' => true
+                    ],
+                    'fname' => [
+                        'required' => true
+                    ],
+                    'lname' => [
+                        'required' => true
+                    ],
+                ]
+            ]
+        ]);
         return $parser;
     }
 
