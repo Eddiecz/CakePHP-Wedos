@@ -1,6 +1,8 @@
 <?php
 namespace Lubos\Wedos\Shell;
 
+use Cake\Filesystem\File;
+use Cake\Filesystem\Folder;
 use Cake\Utility\Xml;
 
 class DnsShell extends WedosShell
@@ -48,6 +50,17 @@ class DnsShell extends WedosShell
                     'type' => [
                         'help' => 'Record type (default A)'
                     ],
+                ]
+            ]
+        ]);
+        $parser->addSubcommand('rowAddBatch', [
+            'help' => 'DNS row add batch',
+            'parser' => [
+                'description' => 'Batch DNS row add via passed json file.',
+                'arguments' => [
+                    'config' => [
+                        'requred' => true
+                    ]
                 ]
             ]
         ]);
@@ -186,6 +199,49 @@ class DnsShell extends WedosShell
             debug($response);
         }
         return $response;
+    }
+
+    /**
+     * Reads json config and add DNS records
+     *
+     * @param string $config Path to json file.
+     * @return bool
+     */
+    public function rowAddBatch($config)
+    {
+        $timeStart = microtime(true);
+        if (!is_array($config)) {
+            $file = new File($config);
+            if (!$file->exists()) {
+                $this->err('<error>Error</error>: config file does not exist.');
+                $this->hr();
+                return false;
+            }
+            $json = $file->read();
+            $config = json_decode($json, true);
+            if (!$config) {
+                $this->err('<error>Error</error>: file is not in valid json format.');
+                $this->hr();
+                return false;
+            }
+        }
+        $this->out(sprintf('%s DNS records to add', count($config)));
+        foreach ($config as $item) {
+            $domain = $item['domain'];
+            $rdata = $item['rdata'];
+            unset(
+                $item['domain'],
+                $item['rdata']
+            );
+            $this->params = $item;
+            $this->rowAdd($domain, $rdata);
+        }
+        $this->out(sprintf(
+            '<success>rowAddBatch finished in %ss</success>',
+            round(microtime(true) - $timeStart, 2)
+        ));
+        $this->hr();
+        return true;
     }
 
     /**
