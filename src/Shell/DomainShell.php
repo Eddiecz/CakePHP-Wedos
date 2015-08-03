@@ -15,10 +15,49 @@ class DomainShell extends WedosShell
     public function getOptionParser()
     {
         $parser = parent::getOptionParser();
-        $parser->addSubcommand('check');
-        $parser->addSubcommand('create');
-        $parser->addSubcommand('info');
+        $parser->addSubcommand('check', [
+            'help' => 'Checking if domain is available',
+            'parser' => [
+                'arguments' => [
+                    'domain' => [
+                        'required' => true
+                    ],
+                ]
+            ]
+        ]);
+        $parser->addSubcommand('create', [
+            'help' => 'Register domain',
+            'parser' => [
+                'arguments' => [
+                    'domain' => [
+                        'required' => true
+                    ],
+                    'owner' => [
+                        'required' => true
+                    ],
+                    'admin' => [
+                        'required' => true
+                    ],
+                ],
+                'options' => [
+                    'period' => [
+                        'help' => 'Number of years (default 1)'
+                    ],
+                ],
+            ]
+        ]);
+        $parser->addSubcommand('info', [
+            'help' => 'Domain info',
+            'parser' => [
+                'arguments' => [
+                    'name' => [
+                        'required' => true
+                    ],
+                ]
+            ]
+        ]);
         $parser->addSubcommand('transfer', [
+            'help' => 'Domain transfer',
             'parser' => [
                 'arguments' => [
                     'name' => [
